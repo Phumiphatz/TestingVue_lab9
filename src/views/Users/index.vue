@@ -1,0 +1,197 @@
+<template>
+  <div>
+    <b-button variant="success" class="float-right" @click="addNewUser"
+      >Add New</b-button
+    >
+
+    <b-modal
+      id="modal-form-user"
+      ref="modal-form-user"
+      :title="title"
+      @hidden="resetModal"
+      @ok="handleOk"
+    >
+      <form ref="form" @submit.stop.prevent="handleSubmit">
+        <b-form-group
+          label="Name"
+          label-for="name"
+          :invalid-feedback="invalidFeedbackName"
+          :valid-feedback="validFeedbackName"
+          :state="stateName"
+        >
+          <b-form-input id="name" v-model="form.name" required></b-form-input>
+        </b-form-group>
+
+        <b-form-group label="Gender:" label-for="gender">
+          <b-form-select
+            id="gender"
+            v-model="form.gender"
+            :options="genderOption"
+            :invalid-feedback="invalidFeedbackGender"
+            :valid-feedback="validFeedbackGender"
+            :state="stateGender"
+            required
+          ></b-form-select>
+        </b-form-group>
+      </form>
+      <b-card class="mt-3" header="Form Data Result">
+        <pre class="m-0">{{ form }}</pre>
+      </b-card>
+    </b-modal>
+
+    <b-table striped hover :items="userList" :fields="fields">
+      <template v-slot:cell(operation)="data">
+        <b-button @click="editUser(data.item)">Edit</b-button>
+        &nbsp;
+        <b-button variant="danger" @click="delUser(data.item)">Delete</b-button>
+      </template>
+    </b-table>
+  </div>
+</template>
+
+<script>
+export default {
+  data () {
+    return {
+      title: 'เพิ่มผู้ใช้ใหม่',
+      form: { name: '', gender: null, id: -1 },
+      genderOption: [
+        {
+          value: null,
+          text: 'Select One'
+        },
+        {
+          value: 'M',
+          text: 'ผู้ชาย'
+        },
+        {
+          value: 'F',
+          text: 'ผู้หญิง'
+        }
+      ],
+      userList: [
+        {
+          id: 1,
+          name: 'dome',
+          gender: 'M'
+        },
+        {
+          id: 2,
+          name: 'phumiphat',
+          gender: 'M'
+        }
+      ],
+      lastId: 3,
+      fields: [
+        {
+          key: 'id',
+          label: 'ไอดี'
+        },
+        'name',
+        'gender',
+        'operation'
+      ]
+    }
+  },
+  methods: {
+    editUser (user) {
+      console.log(user)
+      this.title = 'แก้ไขผู้ใช้'
+      this.$bvModal.show('modal-form-user')
+      this.form = { ...user }
+    },
+    delUser (user) {
+      this.$bvModal
+        .msgBoxConfirm('ท่านต้องการลบ ' + user.name + ' หรือไม่!!!', {
+          title: 'กรุณายืนยัน',
+          size: 'sm',
+          buttonSize: 'sm',
+          okVariant: 'danger',
+          okTitle: 'YES',
+          cancelTitle: 'NO',
+          footerClass: 'p-2',
+          hideHeaderClose: false,
+          centered: true
+        })
+        .then(value => {
+          if (value) {
+            this.deleteUser(user)
+          }
+        })
+    },
+    addNewUser () {
+      this.title = 'เพิ่มผู้ใช้'
+      this.$bvModal.show('modal-form-user')
+    },
+    resetModal () {
+      this.form = {
+        id: -1,
+        name: '',
+        gender: null
+      }
+    },
+    handleOk (bvNodalEvt) {
+      bvNodalEvt.preventDefault()
+      this.handleSubmit()
+    },
+    handleSubmit () {
+      if (this.stateName && this.stateGender) {
+        if (this.form.id > 0) {
+          this.updateUser(this.form)
+        } else {
+          this.addUser(this.form)
+        }
+        // Hide the modal manually
+        this.$nextTick(() => {
+          this.$bvModal.hide('modal-form-user')
+        })
+      }
+    },
+    addUser (user) {
+      user.id = this.lastId++
+      this.userList.push(user)
+    },
+    updateUser (user) {
+      const index = this.userList.findIndex(item => item.id === user.id)
+      this.userList.splice(index, 1, user)
+    },
+    deleteUser (user) {
+      const index = this.userList.findIndex(item => item.id === user.id)
+      this.userList.splice(index, 1)
+    }
+  },
+  computed: {
+    stateName () {
+      return this.form.name.length >= 2
+    },
+    invalidFeedbackName () {
+      if (this.form.name.length > 2) {
+        return ''
+      } else if (this.form.name.length > 0) {
+        return 'ชื่อต้องมีขนาดอย่างน้อย 2 ตัวอักษร'
+      } else {
+        return 'ต้องใส่ชื่อ'
+      }
+    },
+    validFeedbackName () {
+      return this.stateName === true ? 'สำเร็จ' : ''
+    },
+
+    stateGender () {
+      return this.form.gender != null
+    },
+    invalidFeedbackGender () {
+      if (this.form.gender != null) {
+        return ''
+      } else {
+        return 'กรุณาเลือกเพศ'
+      }
+    },
+    validFeedbackGender () {
+      return this.stateGender === true ? 'สำเร็จ' : ''
+    }
+  }
+}
+</script>
+
+<style></style>
